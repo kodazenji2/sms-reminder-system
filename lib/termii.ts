@@ -1,0 +1,85 @@
+/**
+ * Termii SMS Gateway Integration
+ * Docs: https://developers.termii.com/messaging
+ *
+ * The "generic" channel routes through the best path for the recipient's network.
+ * Termii auto-selects Airtel, MTN, Glo, 9Mobile routes based on the number prefix.
+ */
+
+const TERMII_BASE = process.env.TERMII_BASE_URL ?? "https://v3.api.termii.com";
+
+interface TermiiSendResponse {
+  code?: string;
+  message_id?: string;
+  message_id_str?: string;
+  message: string;
+  balance?: number;
+  user?: string;
+}
+
+interface SendResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+/**
+ * Send a single SMS via Termii.
+ * @param to   - Phone number in international format (e.g., "2348012345678")
+ *               or local Nigerian format ("08012345678") — Termii handles both.
+ * @param message - Plain text SMS body (max 160 chars per segment)
+ */
+export async function sendSMS(to: string, message: string): Promise<SendResult> {
+  try {
+    const res = await fetch(`${TERMII_BASE}/sms/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: process.env.TERMII_API_KEY,
+        to,
+        from: process.env.TERMII_SENDER_ID ?? "NICTM",
+        sms: message,
+        type: "plain",
+        channel: process.env.TERMII_SMS_CHANNEL ?? "dnd",
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("[Termii] HTTP error:", res.status, text);
+      return { success: false, error: `HTTP ${res.status}: ${text}` };
+    }
+
+    const data: TermiiSendResponse = await res.json();
+
+    const messageId = data.message_id ?? data.message_id_str;
+    const success = data.code === "ok" || data.message?.toLowerCase().includes("success");
+
+    if (success) {
+      return { success: true, messageId };
+    } else {
+      return { success: false, error: data.message || "Unknown Termii error." };
+    }
+  } catch (err) {
+    console.error("[Termii] fetch error:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+/**
+ * Builds the standard SMS reminder message format.
+ * Keep under 160 characters to avoid multi-part billing.
+ */
+export function buildReminderMessage(opts: {
+  courseCode: string;
+  courseName: string;
+  startTime: string;   // "HH:MM"
+  venue: string;
+}): string {
+  const msg = `NICTM Reminder: ${opts.courseCode} - ${opts.courseName} starts at ${opts.startTime} in ${opts.venue}. Please be on time.`;
+  // Warn in dev if message exceeds 160 chars
+  if (process.env.NODE_ENV === "development" && msg.length > 160) {
+    console.warn(`[Termii] Message is ${msg.length} chars — will use multiple SMS segments.`);
+  }
+  return msg;
+}
