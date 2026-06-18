@@ -10,7 +10,7 @@ async function guardAdmin() {
 }
 
 /** PUT /api/admin/lecturers/[id] — update name, phone, network */
-export async function PUT(req: Request, ctx: { params: { id: string } }) {
+export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!await guardAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const params = await ctx.params;
   const id = params.id;
@@ -24,7 +24,7 @@ export async function PUT(req: Request, ctx: { params: { id: string } }) {
   const { data, error } = await admin
     .from("profiles")
     .update({ full_name, phone: phone || null, network: network || null, active })
-    .eq("id", params.id)
+    .eq("id", id)
     .select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);

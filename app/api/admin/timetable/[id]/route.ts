@@ -11,7 +11,7 @@ async function guardAdmin() {
 }
 
 /** PUT /api/admin/timetable/[id] — update entry */
-export async function PUT(req: Request, ctx: { params: { id: string } }) {
+export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!await guardAdmin())
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const params = await ctx.params;
@@ -37,7 +37,7 @@ export async function PUT(req: Request, ctx: { params: { id: string } }) {
 }
 
 /** PATCH /api/admin/timetable/[id] — toggle active status */
-export async function PATCH(req: Request, ctx: { params: { id: string } }) {
+export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!await guardAdmin())
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const params = await ctx.params;
@@ -57,7 +57,7 @@ export async function PATCH(req: Request, ctx: { params: { id: string } }) {
 }
 
 /** DELETE /api/admin/timetable/[id] — soft-delete by setting active=false */
-export async function DELETE(_req: Request, ctx: { params: { id: string } }) {
+export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!await guardAdmin())
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 

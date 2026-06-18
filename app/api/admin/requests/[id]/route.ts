@@ -10,9 +10,10 @@ async function guardAdmin() {
 }
 
 /** PUT /api/admin/requests/[id] — approve or reject */
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!await guardAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  const { id } = await params;
   const { status, admin_note } = await req.json();
   if (!["approved", "rejected"].includes(status))
     return NextResponse.json({ error: "status must be 'approved' or 'rejected'." }, { status: 400 });
@@ -21,7 +22,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const { data, error } = await admin
     .from("change_requests")
     .update({ status, admin_note: admin_note || null })
-    .eq("id", params.id)
+    .eq("id", id)
     .select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
