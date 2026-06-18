@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { NICTMBrand } from "@/components/ui/NICTMBrand";
 
+export const dynamic = "force-dynamic";
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
