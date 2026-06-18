@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
-        setAll(toSet) {
+        setAll(toSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
           toSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           toSet.forEach(({ name, value, options }) =>
@@ -24,10 +24,10 @@ export async function middleware(request: NextRequest) {
   // Refresh session — required on every request to keep auth alive
   const { data: { user } } = await supabase.auth.getUser();
 
-  const path    = request.nextUrl.pathname;
-  const isAdmin    = path.startsWith("/admin");
+  const path = request.nextUrl.pathname;
+  const isAdmin = path.startsWith("/admin");
   const isLecturer = path.startsWith("/lecturer");
-  const isLogin    = path === "/login";
+  const isLogin = path === "/login";
 
   // Not logged in trying to access protected routes → login
   if (!user && (isAdmin || isLecturer)) {

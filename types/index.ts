@@ -12,6 +12,7 @@ export interface Profile {
   role: UserRole
   active: boolean
   network: Network | null
+  reminder_preferences?: string[]
   created_at: string
 }
 
@@ -50,6 +51,7 @@ export interface Notification {
   phone: string
   message: string
   status: NotificationStatus
+  reminder_type?: string
   termii_message_id: string | null
   sent_at: string
   class_date: string | null
