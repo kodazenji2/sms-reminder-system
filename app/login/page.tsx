@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { NICTMBrand } from "@/components/ui/NICTMBrand";
 
-export const dynamic = "force-dynamic";
-
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -41,27 +39,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 text-white"
+    <div className="min-h-screen flex text-white"
       style={{ background: "radial-gradient(circle at top left, rgba(148,163,184,0.24), transparent 20%), radial-gradient(circle at bottom right, rgba(15,23,42,0.30), transparent 40%), #334155" }}>
 
-      <div className="w-full max-w-md">
-        {/* Brand */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-4 mb-5">
-            <div className="w-12 h-12 rounded-full items-center justify-center shadow-lg shadow-nictm-gold/30 flex-shrink-0">
-              <NICTMBrand />
-            </div>
-            <div className="text-left">
-              <p className="text-white font-extrabold text-xl leading-tight">NICTM</p>
-              <p className="text-nictm-200 text-xs tracking-widest uppercase mt-0.5">
-                Uromi · Edo State
-              </p>
-            </div>
+      {/* Logo on left */}
+      <div className="hidden md:flex w-1/3 items-center justify-center p-6">
+        <div className="flex flex-col items-center">
+          <div className="w-24 h-24 rounded-full items-center justify-center shadow-lg shadow-nictm-gold/30 flex-shrink-0 mb-4">
+            <NICTMBrand />
           </div>
-          <h1 className="font-serif text-white text-3xl leading-snug mb-2">
-            SMS Timetable<br />Reminder System
-          </h1>
-          <p className="text-slate-300 text-sm">Computer Science Department</p>
+          <p className="text-white font-extrabold text-2xl leading-tight">NICTM</p>
+          <p className="text-nictm-200 text-sm tracking-widest uppercase mt-1">
+            Uromi · Edo State
+          </p>
+        </div>
+      </div>
+
+      {/* Center content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          {/* Title */}
+          <div className="text-center mb-10">
+            <h1 className="font-serif text-white text-4xl leading-snug mb-2">
+              SMS Timetable<br />Reminder System
+            </h1>
+            <p className="text-slate-300 text-sm">Computer Science Department</p>
+          </div>
+
         </div>
 
         {/* Login card */}
@@ -115,5 +119,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </div >
   );
 }
