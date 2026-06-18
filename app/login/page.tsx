@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { NICTMBrand } from "@/components/ui/NICTMBrand";
 
 export default function LoginPage() {
@@ -39,86 +38,85 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex text-white"
-      style={{ background: "radial-gradient(circle at top left, rgba(148,163,184,0.24), transparent 20%), radial-gradient(circle at bottom right, rgba(15,23,42,0.30), transparent 40%), #334155" }}>
-
-      {/* Logo on left */}
-      <div className="hidden md:flex w-1/3 items-center justify-center p-6">
+    <div
+      className="min-h-screen flex flex-col md:flex-row text-white"
+      style={{ background: "radial-gradient(circle at top left, rgba(148,163,184,0.24), transparent 20%), radial-gradient(circle at bottom right, rgba(15,23,42,0.30), transparent 40%), #334155" }}
+    >
+      {/* Logo — top on mobile, left sidebar on md+ */}
+      <div className="flex md:w-1/3 items-center justify-center p-6 md:p-10">
         <div className="flex flex-col items-center">
-          <div className="w-24 h-24 rounded-full items-center justify-center shadow-lg shadow-nictm-gold/30 flex-shrink-0 mb-4">
+          <div className="w-16 h-16 md:w-24 md:h-24 rounded-full items-center justify-center shadow-lg shadow-nictm-gold/30 flex-shrink-0 mb-3 md:mb-4 flex">
             <NICTMBrand />
           </div>
-          <p className="text-white font-extrabold text-2xl leading-tight">NICTM</p>
-          <p className="text-nictm-200 text-sm tracking-widest uppercase mt-1">
+          <p className="text-white font-extrabold text-xl md:text-2xl leading-tight">NICTM</p>
+          <p className="text-nictm-200 text-xs md:text-sm tracking-widest uppercase mt-1">
             Uromi · Edo State
           </p>
         </div>
       </div>
 
       {/* Center content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10 md:py-10">
         <div className="w-full max-w-md">
           {/* Title */}
-          <div className="text-center mb-10">
-            <h1 className="font-serif text-white text-4xl leading-snug mb-2">
+          <div className="text-center mb-8 md:mb-10">
+            <h1 className="font-serif text-white text-3xl md:text-4xl leading-snug mb-2">
               SMS Timetable<br />Reminder System
             </h1>
             <p className="text-slate-300 text-sm">Computer Science Department</p>
           </div>
 
-        </div>
+          {/* Login card */}
+          <div className="glass rounded-3xl p-6 md:p-8 shadow-2xl border-white/10">
+            <h2 className="font-serif text-nictm-950 text-xl mb-6">Sign In</h2>
 
-        {/* Login card */}
-        <div className="glass rounded-3xl p-8 shadow-2xl border-white/10">
-          <h2 className="font-serif text-nictm-950 text-xl mb-6">Sign In</h2>
-
-          <div className="mb-4">
-            <label className="label">Email Address</label>
-            <input
-              type="email"
-              className="input"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleLogin()}
-              placeholder="your@nictm.edu.ng"
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="mb-5">
-            <label className="label">Password</label>
-            <input
-              type="password"
-              className="input"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleLogin()}
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-700 text-sm px-4 py-2.5 rounded-xl mb-4 font-medium">
-              {error}
+            <div className="mb-4">
+              <label className="label">Email Address</label>
+              <input
+                type="email"
+                className="input"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleLogin()}
+                placeholder="your@nictm.edu.ng"
+                autoComplete="email"
+              />
             </div>
-          )}
 
-          <button
-            className="btn-primary w-full py-3 text-base"
-            onClick={handleLogin}
-            disabled={loading}
-          >
-            {loading ? "Signing in…" : "Sign In →"}
-          </button>
+            <div className="mb-5">
+              <label className="label">Password</label>
+              <input
+                type="password"
+                className="input"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleLogin()}
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+            </div>
 
-          <p className="text-nictm-600 text-xs mt-4 text-center">
-            Lecturers and administrators use the same login page.
-            Your dashboard may differ with respect to your role.
-          </p>
+            {error && (
+              <div className="bg-red-50 text-red-700 text-sm px-4 py-2.5 rounded-xl mb-4 font-medium">
+                {error}
+              </div>
+            )}
+
+            <button
+              className="btn-primary w-full py-3 text-base"
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              {loading ? "Signing in…" : "Sign In →"}
+            </button>
+
+            <p className="text-nictm-600 text-xs mt-4 text-center">
+              Lecturers and administrators use the same login page.
+              Your dashboard may differ with respect to your role.
+            </p>
+          </div>
         </div>
       </div>
     </div>
-
   );
 }
