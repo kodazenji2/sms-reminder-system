@@ -3,7 +3,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendSMS, buildReminderMessage } from "@/lib/termii";
 
 /** POST /api/admin/timetable/[id]/sms — send a manual/test SMS reminder */
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
@@ -12,11 +12,13 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   if (profile?.role !== "admin")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  const { id } = await params;
+
   const admin = createAdminClient();
   const { data: entry } = await admin
     .from("timetable")
     .select("*, lecturer:profiles!lecturer_id(id, full_name, phone)")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!entry) return NextResponse.json({ error: "Entry not found." }, { status: 404 });
