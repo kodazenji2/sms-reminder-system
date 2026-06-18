@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { LecturersManager } from "@/components/admin/LecturersManager";
 import type { Profile, TimetableEntry } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export default async function LecturersPage() {
   const supabase = await createClient();
   const [{ data: lecturers }, { data: timetable }] = await Promise.all([
