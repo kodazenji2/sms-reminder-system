@@ -192,7 +192,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     message: `Processed ${results.length} reminder(s).`,
     day: todayDay,
-    window: `${wsStr} – ${weStr} WAT`,
+    window: `${windowStart.toISOString()} – ${windowEnd.toISOString()} WAT`,
     sent: results.length,
     results,
   });
