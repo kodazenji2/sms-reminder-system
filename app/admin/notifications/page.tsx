@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NotificationsManager } from "@/components/admin/NotificationsManager";
 import type { Notification, ChangeRequest, Profile } from "@/types";
-
+export const dynamic = "force-dynamic";
 export default async function NotificationsPage() {
   const supabase = await createClient();
 

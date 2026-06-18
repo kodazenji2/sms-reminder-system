@@ -3,21 +3,23 @@ import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import type { TimetableEntry, Notification, ChangeRequest, Profile } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 // Simulate "today" as a day label matching timetable day_of_week values
 function getTodayLabel(): string {
-  return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
+  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
 }
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
-  const today    = getTodayLabel();
+  const today = getTodayLabel();
 
   const [
     { count: lecturerCount },
-    { data: todayClasses   },
-    { data: recentNotifs   },
-    { data: allRequests    },
-    { count: pendingCount  },
+    { data: todayClasses },
+    { data: recentNotifs },
+    { data: allRequests },
+    { count: pendingCount },
   ] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "lecturer"),
     supabase.from("timetable")
@@ -38,10 +40,10 @@ export default async function AdminDashboard() {
     <div className="space-y-7">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard label="Total Lecturers"    value={lecturerCount ?? 0}   sub="Registered in system"    />
-        <StatCard label="Classes Today"      value={(todayClasses as TimetableEntry[])?.length ?? 0}  sub={today} accent />
-        <StatCard label="SMS (Recent)"       value={deliveredThisWeek}    sub="Delivered notifications" gold />
-        <StatCard label="Pending Requests"   value={pendingCount ?? 0}    sub="Awaiting your review"    accent={!!pendingCount} />
+        <StatCard label="Total Lecturers" value={lecturerCount ?? 0} sub="Registered in system" />
+        <StatCard label="Classes Today" value={(todayClasses as TimetableEntry[])?.length ?? 0} sub={today} accent />
+        <StatCard label="SMS (Recent)" value={deliveredThisWeek} sub="Delivered notifications" gold />
+        <StatCard label="Pending Requests" value={pendingCount ?? 0} sub="Awaiting your review" accent={!!pendingCount} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

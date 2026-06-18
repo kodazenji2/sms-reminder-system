@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { TimetableManager } from "@/components/admin/TimetableManager";
 import type { TimetableEntry, Profile } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export default async function TimetablePage() {
   const supabase = await createClient();
 
