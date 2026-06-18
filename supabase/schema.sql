@@ -17,6 +17,7 @@ create table if not exists public.profiles (
   active      boolean not null default true,
   network     text
               check (network in ('MTN', 'Glo', 'Airtel', '9Mobile')),
+  reminder_preferences text[] not null default array['one_hour_before'],
   created_at  timestamptz not null default now()
 );
 
@@ -91,14 +92,16 @@ create table if not exists public.notifications (
   message             text not null,
   status              text not null default 'pending'
                       check (status in ('delivered', 'failed', 'pending')),
+  reminder_type       text not null default 'manual'
+                      check (reminder_type in ('night_before','morning_of','one_hour_before','thirty_minutes_before','manual')),
   termii_message_id   text,
   sent_at             timestamptz not null default now(),
   class_date          date
 );
 
--- Prevent duplicate reminders for the same class on the same day
+-- Prevent duplicate reminders for the same class on the same day and type
 create unique index if not exists notifications_no_duplicate_reminder
-  on public.notifications (timetable_id, class_date)
+  on public.notifications (timetable_id, class_date, reminder_type)
   where status = 'delivered';
 
 -- ----------------------------------------------------------

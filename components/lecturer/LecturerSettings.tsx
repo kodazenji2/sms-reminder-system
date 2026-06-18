@@ -17,6 +17,7 @@ export function LecturerSettings() {
     const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
     const [phone, setPhone] = useState("");
     const [network, setNetwork] = useState<Network>("MTN");
+    const [reminderPreferences, setReminderPreferences] = useState<string[]>([]);
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -31,7 +32,7 @@ export function LecturerSettings() {
 
             const { data, error } = await supabase
                 .from("profiles")
-                .select("phone, network")
+                .select("phone, network, reminder_preferences")
                 .eq("id", userData.user.id)
                 .single();
 
@@ -40,6 +41,7 @@ export function LecturerSettings() {
             } else if (data) {
                 setPhone(data.phone ?? "");
                 setNetwork(data.network ?? "MTN");
+                setReminderPreferences(data.reminder_preferences ?? ["one_hour_before"]);
             }
             setLoading(false);
         }
@@ -62,7 +64,7 @@ export function LecturerSettings() {
 
         const { error } = await supabase
             .from("profiles")
-            .update({ phone, network })
+            .update({ phone, network, reminder_preferences: reminderPreferences })
             .eq("id", userData.user.id);
 
         if (error) {
@@ -138,6 +140,28 @@ export function LecturerSettings() {
                             <select className="input" value={network} onChange={e => setNetwork(e.target.value as Network)}>
                                 {NETWORKS.map(n => <option key={n} value={n}>{n}</option>)}
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="label">Reminder preferences</label>
+                            <div className="grid grid-cols-1 gap-2">
+                                <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('night_before')} onChange={e => {
+                                    const next = reminderPreferences.includes('night_before') ? reminderPreferences.filter(x => x !== 'night_before') : [...reminderPreferences, 'night_before'];
+                                    setReminderPreferences(next);
+                                }} /> Night before (21:00)</label>
+                                <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('morning_of')} onChange={e => {
+                                    const next = reminderPreferences.includes('morning_of') ? reminderPreferences.filter(x => x !== 'morning_of') : [...reminderPreferences, 'morning_of'];
+                                    setReminderPreferences(next);
+                                }} /> Morning of class (07:00)</label>
+                                <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('one_hour_before')} onChange={e => {
+                                    const next = reminderPreferences.includes('one_hour_before') ? reminderPreferences.filter(x => x !== 'one_hour_before') : [...reminderPreferences, 'one_hour_before'];
+                                    setReminderPreferences(next);
+                                }} /> 1 hour before class</label>
+                                <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('thirty_minutes_before')} onChange={e => {
+                                    const next = reminderPreferences.includes('thirty_minutes_before') ? reminderPreferences.filter(x => x !== 'thirty_minutes_before') : [...reminderPreferences, 'thirty_minutes_before'];
+                                    setReminderPreferences(next);
+                                }} /> 30 minutes before class</label>
+                            </div>
                         </div>
 
                         <div className="flex justify-end">
