@@ -98,8 +98,10 @@ export async function POST(req: Request) {
 
     if (match(normalized, /\b(notification|sms|message|sent)\b/)) {
         const base = supabase.from("notifications");
-        const query = isAdmin ? base : base.eq("lecturer_id", userId);
-        const { count } = await query.select("id", { count: "exact", head: true }).eq("status", "delivered");
+        const query = isAdmin
+            ? base.select("id", { count: "exact", head: true }).eq("status", "delivered")
+            : base.select("id", { count: "exact", head: true }).eq("lecturer_id", userId).eq("status", "delivered");
+        const { count } = await query;
         return NextResponse.json({ reply: `There are ${count ?? 0} delivered SMS notifications${isAdmin ? " in the system." : " for your account."}` });
     }
 
