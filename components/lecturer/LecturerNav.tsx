@@ -32,7 +32,7 @@ export function LecturerNav({ profile }: { profile: Profile }) {
             className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white/10 text-white hover:bg-white/15 transition-colors">
             ☰
           </button>
-          <NICTMBrand inverted />
+          <NICTMBrand inverted size="sm" />
         </div>
 
         <nav className="hidden md:flex gap-1">
