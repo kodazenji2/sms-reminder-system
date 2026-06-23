@@ -81,7 +81,8 @@ vercel
 Add all `.env.local` variables in **Vercel → Project Settings → Environment Variables**.
 
 Vercel will automatically detect `vercel.json` and enable the cron job
-(runs every 5 minutes, calls `/api/cron/send-reminders`).
+(if you use Vercel cron). The app route is designed to work with an external scheduler
+and will safely process reminders when called hourly.
 
 ---
 
@@ -193,11 +194,12 @@ Use your existing cron-job.org account to call this app route on a schedule:
   - `Authorization: Bearer <CRON_SECRET>`
 
 ### Recommended schedule
-- Every `5 minutes`
+- Every `hour`
 
 ### Why
 - The app route checks `Authorization` to protect the cron endpoint.
 - If the header is missing, the request will be rejected.
+- The cron handler now uses a ±30-minute window so hourly triggers still deliver reminders on time.
 
 ### Example configuration
 - Job type: HTTP(s)
@@ -212,6 +214,12 @@ Use your existing cron-job.org account to call this app route on a schedule:
 curl -H "Authorization: Bearer your-secret-string" \
   https://<your-app>.vercel.app/api/cron/send-reminders
 ```
+
+### If cron-job.org can’t send headers
+If cron-job.org somehow does not support custom headers in your plan, I can help modify the route to also accept:
+- `https://<your-app>.vercel.app/api/cron/send-reminders?secret=your-secret-string`
+
+> For now, use the header-based setup because the app is already built to require `Authorization: Bearer <CRON_SECRET>`.
 
 ### If cron-job.org can’t send headers
 If cron-job.org somehow does not support custom headers in your plan, I can help modify the route to also accept:
