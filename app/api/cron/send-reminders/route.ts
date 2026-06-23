@@ -2,18 +2,6 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendSMS, buildReminderMessage } from "@/lib/termii";
 
-/**
- * GET /api/cron/send-reminders
- *
- * Called every 5 minutes by Vercel Cron (see vercel.json).
- * Finds any classes starting within the next 30 minutes (±2 min window)
- * that have not already received a reminder today, then sends SMS via Termii.
- *
- * Security: Vercel Cron passes the CRON_SECRET in the Authorization header
- * automatically. Any other caller without the secret is rejected.
- *
- * Timezone: All comparisons use WAT (UTC+1, Nigeria standard time).
- */
 export async function GET(request: Request) {
 
   // ── Auth ─────────────────────────────────────────────────────────────────
