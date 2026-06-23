@@ -68,16 +68,27 @@ export async function sendSMS(to: string, message: string): Promise<SendResult> 
 
 /**
  * Builds the standard SMS reminder message format.
- * Keep under 160 characters to avoid multi-part billing.
+ * Aims to read like a respectful note from the department, not a terse alert —
+ * the same tone whether the recipient is a junior lecturer or the HOD.
+ *
+ * Keep under 160 characters where possible to avoid multi-part billing —
+ * adding a name will sometimes push a message into a 2nd segment, which is
+ * an acceptable trade-off for tone.
  */
 export function buildReminderMessage(opts: {
   courseCode: string;
   courseName: string;
-  startTime: string;   // "HH:MM"
+  startTime: string;     // "HH:MM"
   venue: string;
+  lecturerName?: string; // optional, e.g. "Dr. Adeyemi" — use surname/title only, not full bio
 }): string {
-  const msg = `NICTM Reminder: ${opts.courseCode} - ${opts.courseName} starts at ${opts.startTime} in ${opts.venue}. Please be on time.`;
-  // Warn in dev if message exceeds 160 chars
+  const greeting = opts.lecturerName ? `Good day ${opts.lecturerName},` : `Good day,`;
+
+  const msg =
+    `${greeting} this is a kind reminder that your class ${opts.courseCode} (${opts.courseName}) ` +
+    `is scheduled for ${opts.startTime} at ${opts.venue}. ` +
+    `Kindly note the time. Thank you. — NICTM CS Dept.`;
+
   if (process.env.NODE_ENV === "development" && msg.length > 160) {
     console.warn(`[Termii] Message is ${msg.length} chars — will use multiple SMS segments.`);
   }
