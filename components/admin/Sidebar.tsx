@@ -25,6 +25,12 @@ export function Sidebar({ pendingCount }: { pendingCount: number }) {
   return (
     <>
       <div className="md:hidden px-4 py-3 bg-slate-950/90 border-b border-white/10">
+        <div className="flex items-center gap-3 mb-3">
+          <NICTMBrand inverted size="sm" />
+          <p className="text-[10px] font-bold text-nictm-200 uppercase tracking-widest">
+            Admin Portal
+          </p>
+        </div>
         <details className="group">
           <summary className="flex items-center justify-between w-full rounded-2xl bg-slate-900/95 px-4 py-3 text-sm font-semibold text-white cursor-pointer">
             <span>Menu</span>
@@ -63,7 +69,7 @@ export function Sidebar({ pendingCount }: { pendingCount: number }) {
       <aside className="hidden md:flex w-60 bg-slate-950/90 backdrop-blur-xl border-r border-white/10 flex-col flex-shrink-0 sticky top-0 h-screen">
         {/* Brand */}
         <div className="px-5 py-6 border-b border-white/10">
-          <NICTMBrand inverted />
+          <NICTMBrand inverted size="sm" />
           <p className="text-[10px] font-bold text-nictm-200 uppercase tracking-widest mt-3">
             Admin Portal
           </p>

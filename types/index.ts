@@ -3,6 +3,7 @@ export type DayOfWeek = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Frida
 export type Network = "MTN" | "Glo" | "Airtel" | "9Mobile"
 export type RequestStatus = "pending" | "approved" | "rejected"
 export type NotificationStatus = "delivered" | "failed" | "pending"
+export type ChangeRequestType = "one_off" | "permanent"
 
 export interface Profile {
   id: string
@@ -35,8 +36,11 @@ export interface ChangeRequest {
   id: string
   lecturer_id: string
   timetable_id: string
+  request_type: ChangeRequestType
   reason: string
   requested_date: string | null
+  requested_day_of_week: DayOfWeek | null
+  requested_start_time: string | null
   status: RequestStatus
   admin_note: string | null
   created_at: string

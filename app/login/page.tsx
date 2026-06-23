@@ -39,24 +39,20 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col md:flex-row text-white"
+      className="min-h-screen flex flex-col md:flex-row items-center justify-center md:items-stretch md:justify-start text-white"
       style={{ background: "radial-gradient(circle at top left, rgba(148,163,184,0.24), transparent 20%), radial-gradient(circle at bottom right, rgba(15,23,42,0.30), transparent 40%), #334155" }}
     >
-      {/* Logo — top on mobile, left sidebar on md+ */}
-      <div className="flex md:w-1/3 items-center justify-center p-6 md:p-10">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 md:w-24 md:h-24 rounded-full items-center justify-center shadow-lg shadow-nictm-gold/30 flex-shrink-0 mb-3 md:mb-4 flex">
-            <NICTMBrand />
-          </div>
-          <p className="text-white font-extrabold text-xl md:text-2xl leading-tight">NICTM</p>
-          <p className="text-nictm-200 text-xs md:text-sm tracking-widest uppercase mt-1">
-            Uromi · Edo State
-          </p>
-        </div>
+      {/* Logo + school name — stacks above the card on mobile, left sidebar on md+ */}
+      <div className="flex md:w-1/3 flex-col items-center justify-center px-6 pt-10 pb-6 md:p-10">
+        <NICTMBrand size="lg" className="shadow-lg shadow-nictm-gold/30 mb-3 md:mb-4" />
+        <p className="text-white font-extrabold text-xl md:text-2xl leading-tight">NICTM</p>
+        <p className="text-nictm-200 text-xs md:text-sm tracking-widest uppercase mt-1">
+          Uromi · Edo State
+        </p>
       </div>
 
-      {/* Center content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10 md:py-10">
+      {/* Title + login card */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full px-6 pb-10 md:py-10">
         <div className="w-full max-w-md">
           {/* Title */}
           <div className="text-center mb-8 md:mb-10">

@@ -100,7 +100,7 @@ export default async function LecturerSchedulePage() {
                 {/* Reminder badge */}
                 <span className="bg-nictm-gold-l text-nictm-gold text-xs font-bold
                                  px-3 py-1.5 rounded-xl flex-shrink-0 hidden sm:inline-flex items-center gap-1">
-                  📱 Reminder set
+                   Reminder set
                 </span>
               </div>
             ))}
