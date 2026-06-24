@@ -136,8 +136,8 @@ export function TimetableManager({ initialEntries, lecturers }: Props) {
       </div>
 
       {/* Table */}
-      <div className="card">
-        <table className="data-table">
+      <div className="card overflow-x-auto">
+        <table className="data-table w-full min-w-[900px]">
           <thead>
             <tr>
               <th>Day</th><th>Time</th><th>Course</th><th>Code</th>
