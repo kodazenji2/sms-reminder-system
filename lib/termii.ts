@@ -1,3 +1,4 @@
+
 /**
  * Termii SMS Gateway Integration
  * Docs: https://developers.termii.com/messaging
@@ -24,9 +25,21 @@ interface SendResult {
 }
 
 /**
+ * Termii requires international format without a leading "+".
+ * Converts local Nigerian format ("0801...") to "234801...".
+ * Leaves already-international numbers ("234801...") unchanged.
+ */
+function toInternationalFormat(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("234")) return digits;
+  if (digits.startsWith("0")) return "234" + digits.slice(1);
+  return digits;
+}
+
+/**
  * Send a single SMS via Termii.
- * @param to   - Phone number in international format (e.g., "2348012345678")
- *               or local Nigerian format ("08012345678") — Termii handles both.
+ * @param to   - Phone number in local ("0801...") or international ("234801...")
+ *               format. Normalized internally before being sent to Termii.
  * @param message - Plain text SMS body (max 160 chars per segment)
  */
 export async function sendSMS(to: string, message: string): Promise<SendResult> {
@@ -36,7 +49,7 @@ export async function sendSMS(to: string, message: string): Promise<SendResult> 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         api_key: process.env.TERMII_API_KEY,
-        to,
+        to: toInternationalFormat(to),
         from: process.env.TERMII_SENDER_ID ?? "NICTM",
         sms: message,
         type: "plain",
@@ -87,7 +100,7 @@ export function buildReminderMessage(opts: {
   const msg =
     `${greeting} this is a kind reminder that your class ${opts.courseCode} (${opts.courseName}) ` +
     `is scheduled for ${opts.startTime} at ${opts.venue}. ` +
-    `Kindly note the time. Thank you. — NICTM CS Dept.`;
+    `Kindly note the time. Thank you. NICTM CS Dept.`;
 
   if (process.env.NODE_ENV === "development" && msg.length > 160) {
     console.warn(`[Termii] Message is ${msg.length} chars — will use multiple SMS segments.`);
