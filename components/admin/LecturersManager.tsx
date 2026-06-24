@@ -94,8 +94,8 @@ export function LecturersManager({ initialLecturers, classCounts }: Props) {
         <button className="btn-primary" onClick={openAdd}>+ Add Lecturer</button>
       </div>
 
-      <div className="card">
-        <table className="data-table">
+      <div className="card overflow-x-auto">
+        <table className="data-table w-full min-w-[700px]">
           <thead>
             <tr>
               <th>Name</th><th>Phone</th><th>Network</th>
