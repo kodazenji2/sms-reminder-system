@@ -6,7 +6,7 @@
  * Termii auto-selects Airtel, MTN, Glo, 9Mobile routes based on the number prefix.
  */
 
-const TERMII_BASE = process.env.TERMII_BASE_URL ?? "https://v3.api.termii.com";
+const TERMII_BASE = process.env.TERMII_BASE_URL ?? "https://v3.api.termii.com/api";
 
 interface TermiiSendResponse {
   code?: string;
