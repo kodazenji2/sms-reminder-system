@@ -96,8 +96,8 @@ export function NotificationsManager({ notifications, requests }: Props) {
       {requests.filter(r => r.status !== "pending").length > 0 && (
         <div>
           <h2 className="font-serif text-nictm-950 text-xl mb-4">Previous Requests</h2>
-          <div className="card">
-            <table className="data-table">
+          <div className="card overflow-x-auto">
+            <table className="data-table w-full min-w-[600px]">
               <thead>
                 <tr><th>Lecturer</th><th>Course</th><th>Reason</th><th>Date</th><th>Status</th></tr>
               </thead>
@@ -136,8 +136,8 @@ export function NotificationsManager({ notifications, requests }: Props) {
           </div>
         </div>
 
-        <div className="card">
-          <table className="data-table">
+        <div className="card overflow-x-auto">
+          <table className="data-table w-full min-w-[600px]">
             <thead>
               <tr><th>Recipient</th><th>Phone</th><th>Message</th><th>Sent At</th><th>Status</th></tr>
             </thead>
