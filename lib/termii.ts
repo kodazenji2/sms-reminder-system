@@ -53,7 +53,7 @@ export async function sendSMS(to: string, message: string): Promise<SendResult> 
         from: process.env.TERMII_SENDER_ID ?? "NICTM",
         sms: message,
         type: "plain",
-        channel: process.env.TERMII_SMS_CHANNEL ?? "dnd",
+        channel: process.env.TERMII_SMS_CHANNEL ?? "generic",
       }),
     });
 
