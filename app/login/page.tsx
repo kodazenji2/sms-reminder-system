@@ -128,12 +128,7 @@ export default function LoginPage() {
               {loading ? "Signing in…" : "Sign In →"}
             </button>
 
-            <p className="text-nictm-600 text-xs mt-4 text-center">
-              Administrator?{" "}
-              <Link href="/login/admin" className="underline font-semibold">
-                Use the Admin Login
-              </Link>
-            </p>
+            
           </div>
         </div>
       </div>
