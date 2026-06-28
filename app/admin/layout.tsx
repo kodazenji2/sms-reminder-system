@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/admin/Sidebar";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login/admin");
 
   // Confirm admin role
   const { data: profile } = await supabase
@@ -16,9 +16,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { count } = await supabase
     .from("change_requests").select("id", { count: "exact", head: true }).eq("status", "pending");
 
+  // Does this admin ALSO teach classes? If they have any timetable
+  // entries assigned to them, show the "View Teaching Schedule" switch.
+  const { count: teachingCount } = await supabase
+    .from("timetable")
+    .select("id", { count: "exact", head: true })
+    .eq("lecturer_id", user.id)
+    .eq("active", true);
+
+  const teachesClasses = (teachingCount ?? 0) > 0;
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar pendingCount={count ?? 0} />
+      <Sidebar pendingCount={count ?? 0} teachesClasses={teachesClasses} />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="bg-white border-b border-nictm-100 px-8 py-4 flex items-center justify-between sticky top-0 z-40">
