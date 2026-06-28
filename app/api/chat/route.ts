@@ -19,12 +19,23 @@ function normalize(text: string) {
         .trim();
 }
 
+/**
+ * Returns the current date adjusted to WAT (UTC+1).
+ * Vercel functions run in UTC — without this offset, todayLabel()/
+ * tomorrowLabel() return the wrong day for any time between
+ * 00:00–00:59 WAT, since the UTC clock is still on the previous day.
+ */
+function nowWAT() {
+    const WAT_OFFSET_MS = 60 * 60 * 1000; // UTC+1
+    return new Date(Date.now() + WAT_OFFSET_MS);
+}
+
 function todayLabel() {
-    return DAY_NAMES[new Date().getDay()];
+    return DAY_NAMES[nowWAT().getUTCDay()];
 }
 
 function tomorrowLabel() {
-    return DAY_NAMES[(new Date().getDay() + 1) % 7];
+    return DAY_NAMES[(nowWAT().getUTCDay() + 1) % 7];
 }
 
 function match(text: string, pattern: RegExp) {
@@ -56,7 +67,7 @@ export async function POST(req: Request) {
     const isAdmin = profile?.role === "admin";
     const day = match(normalized, /tomorrow|next day/) ? tomorrowLabel() : todayLabel();
 
-    if (match(normalized, /\b(class|schedule|course|lecture|lesson)\b/)) {
+    if (match(normalized, /\b(class(es)?|schedule(s)?|course(s)?|lecture(s)?|lesson(s)?)\b/)) {
         const dayQuery = match(normalized, /tomorrow|next|upcoming/) ? tomorrowLabel() : day;
         const { data: classes } = await supabase
             .from("timetable")
@@ -77,7 +88,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ reply: `Your ${dayQuery} schedule:\n${lines.join("\n")}` });
     }
 
-    if (match(normalized, /\b(change request|pending request|requests|request status)\b/)) {
+    if (match(normalized, /\b(change request(s)?|pending request(s)?|request(s)?|request status)\b/)) {
         if (isAdmin) {
             const { count } = await supabase
                 .from("change_requests")
@@ -96,7 +107,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ reply: `You have ${count ?? 0} pending change requests.` });
     }
 
-    if (match(normalized, /\b(notification|sms|message|sent)\b/)) {
+    if (match(normalized, /\b(notification(s)?|sms|message(s)?|sent|delivered)\b/)) {
         const base = supabase.from("notifications");
         const query = isAdmin
             ? base.select("id", { count: "exact", head: true }).eq("status", "delivered")
@@ -105,7 +116,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ reply: `There are ${count ?? 0} delivered SMS notifications${isAdmin ? " in the system." : " for your account."}` });
     }
 
-    if (match(normalized, /\b(lecturer|teacher|staff|users)\b/) && isAdmin) {
+    if (match(normalized, /\b(lecturer(s)?|teacher(s)?|staff|users)\b/) && isAdmin) {
         const { count } = await supabase
             .from("profiles")
             .select("id", { count: "exact", head: true })
