@@ -25,17 +25,22 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isAdmin = path.startsWith("/admin");
-  const isLecturer = path.startsWith("/lecturer");
-  const isLogin = path === "/login";
+  const isAdminArea   = path.startsWith("/admin");
+  const isLecturerArea = path.startsWith("/lecturer");
+  // Two separate login entry points
+  const isStaffLogin = path === "/login";
+  const isAdminLogin = path === "/login/admin";
 
-  // Not logged in trying to access protected routes → login
-  if (!user && (isAdmin || isLecturer)) {
+  // Not logged in trying to access protected routes → send to the right login
+  if (!user && isAdminArea) {
+    return NextResponse.redirect(new URL("/login/admin", request.url));
+  }
+  if (!user && isLecturerArea) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Logged in but on login page → redirect to correct portal
-  if (user && isLogin) {
+  // Logged in but sitting on a login page → bounce to their portal
+  if (user && (isStaffLogin || isAdminLogin)) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -46,8 +51,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
-  // Role enforcement: lecturer trying to access /admin → back to /lecturer
-  if (user && isAdmin) {
+  // Role enforcement: only admins may access /admin
+  if (user && isAdminArea) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -59,12 +64,17 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // NOTE: /lecturer is intentionally NOT blocked for admins.
+  // An admin who also teaches classes can switch into the lecturer
+  // view via the link in the admin sidebar — see app/admin/layout.tsx.
+
   return response;
 }
 
 export const config = {
   matcher: [
     "/login",
+    "/login/admin",
     "/admin/:path*",
     "/lecturer/:path*",
     // Exclude cron routes — they use their own CRON_SECRET header auth
