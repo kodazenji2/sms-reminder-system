@@ -10,8 +10,10 @@ export default async function LecturerLayout({ children }: { children: React.Rea
   const { data: profile } = await supabase
     .from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/login");
-  // Admins going to /lecturer get bounced back
-  if (profile.role === "admin") redirect("/admin");
+
+  // Admins are now ALLOWED here intentionally — this is how an admin
+  // who also teaches classes views their own schedule. LecturerNav
+  // shows a "Back to Admin" link when profile.role === "admin".
 
   return (
     <div className="min-h-screen flex flex-col">
