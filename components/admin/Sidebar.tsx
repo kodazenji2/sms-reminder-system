@@ -12,14 +12,20 @@ const NAV = [
   { href: "/admin/notifications", label: "Notifications", icon: "⊗" },
 ];
 
-export function Sidebar({ pendingCount }: { pendingCount: number }) {
+interface SidebarProps {
+  pendingCount: number;
+  /** True if this admin also has timetable entries assigned to them */
+  teachesClasses?: boolean;
+}
+
+export function Sidebar({ pendingCount, teachesClasses = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/login/admin");
   }
 
   return (
@@ -58,6 +64,18 @@ export function Sidebar({ pendingCount }: { pendingCount: number }) {
                 </Link>
               );
             })}
+
+            {teachesClasses && (
+              <Link href="/lecturer"
+                className="block rounded-xl px-4 py-3 text-sm font-semibold transition-colors
+                           bg-nictm-gold-l/10 text-nictm-gold hover:bg-nictm-gold-l/20">
+                <div className="flex items-center gap-3">
+                  <span className="text-base opacity-80">⇄</span>
+                  <span className="flex-1">View Teaching Schedule</span>
+                </div>
+              </Link>
+            )}
+
             <button onClick={handleLogout}
               className="w-full text-left rounded-xl px-4 py-3 text-sm font-semibold text-nictm-200 hover:bg-white/5 hover:text-white transition-colors">
               ↩ Sign Out
@@ -98,8 +116,17 @@ export function Sidebar({ pendingCount }: { pendingCount: number }) {
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-white/10">
+        {/* Lecturer-view switch + logout */}
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          {teachesClasses && (
+            <Link href="/lecturer"
+              title="Switch to your lecturer dashboard"
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-semibold
+                         text-nictm-gold hover:bg-nictm-gold-l/10 rounded-xl transition-colors">
+              <span className="text-base opacity-80">⇄</span>
+              View Teaching Schedule
+            </Link>
+          )}
           <button onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-semibold text-nictm-200 hover:text-white hover:bg-white/5 rounded-xl transition-colors">
             ↩ Sign Out
