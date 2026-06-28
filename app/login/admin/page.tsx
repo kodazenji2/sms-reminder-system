@@ -119,12 +119,7 @@ export default function AdminLoginPage() {
               {loading ? "Signing in…" : "Sign In →"}
             </button>
 
-            <p className="text-nictm-600 text-xs mt-4 text-center">
-              Lecturer?{" "}
-              <Link href="/login" className="underline font-semibold">
-                Use the Lecturer Login
-              </Link>
-            </p>
+            
           </div>
         </div>
       </div>
