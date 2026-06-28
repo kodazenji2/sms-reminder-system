@@ -13,9 +13,11 @@ export function LecturerNav({ profile }: { profile: Profile }) {
   const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isAdminViewingAsLecturer = profile.role === "admin";
+
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push(isAdminViewingAsLecturer ? "/login/admin" : "/login");
   }
 
   const tabs = [
@@ -48,12 +50,23 @@ export function LecturerNav({ profile }: { profile: Profile }) {
               </Link>
             );
           })}
+
+          {isAdminViewingAsLecturer && (
+            <Link href="/admin"
+              title="Switch back to admin dashboard"
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors
+                         text-nictm-gold hover:bg-nictm-gold-l/10 flex items-center gap-1.5">
+              ⇄ Back to Admin
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:block text-right">
             <p className="text-white text-xs font-semibold leading-tight">{profile.full_name}</p>
-            <p className="text-nictm-200 text-[10px] mt-0.5">{profile.network ?? ""} {profile.phone ?? ""}</p>
+            <p className="text-nictm-200 text-[10px] mt-0.5">
+              {isAdminViewingAsLecturer ? "Admin · Teaching View" : `${profile.network ?? ""} ${profile.phone ?? ""}`}
+            </p>
           </div>
           <button onClick={handleLogout}
             className="bg-white/8 hover:bg-white/15 text-nictm-200 hover:text-white
@@ -80,6 +93,15 @@ export function LecturerNav({ profile }: { profile: Profile }) {
                 </Link>
               );
             })}
+
+            {isAdminViewingAsLecturer && (
+              <Link href="/admin"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-2xl px-4 py-3 text-sm font-semibold transition-colors
+                           text-nictm-gold bg-nictm-gold-l/10">
+                ⇄ Back to Admin
+              </Link>
+            )}
           </div>
         </div>
       ) : null}
