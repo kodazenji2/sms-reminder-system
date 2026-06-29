@@ -19,12 +19,6 @@ function normalize(text: string) {
         .trim();
 }
 
-/**
- * Returns the current date adjusted to WAT (UTC+1).
- * Vercel functions run in UTC — without this offset, todayLabel()/
- * tomorrowLabel() return the wrong day for any time between
- * 00:00–00:59 WAT, since the UTC clock is still on the previous day.
- */
 function nowWAT() {
     const WAT_OFFSET_MS = 60 * 60 * 1000; // UTC+1
     return new Date(Date.now() + WAT_OFFSET_MS);
@@ -69,16 +63,40 @@ export async function POST(req: Request) {
 
     if (match(normalized, /\b(class(es)?|schedule(s)?|course(s)?|lecture(s)?|lesson(s)?)\b/)) {
         const dayQuery = match(normalized, /tomorrow|next|upcoming/) ? tomorrowLabel() : day;
-        const { data: classes } = await supabase
+
+        // FIXED: admins were filtered to lecturer_id = their own ID, so they
+        // always got "no classes" even when classes existed for other lecturers.
+        // Admins now see ALL active classes for the day, with lecturer name attached.
+        let classesQuery = supabase
             .from("timetable")
-            .select("course_code, course_name, start_time, end_time, venue")
-            .eq("lecturer_id", userId)
+            .select(isAdmin
+                ? "course_code, course_name, start_time, end_time, venue, lecturer:profiles!lecturer_id(full_name)"
+                : "course_code, course_name, start_time, end_time, venue")
             .eq("active", true)
             .eq("day_of_week", dayQuery)
             .order("start_time");
 
+        if (!isAdmin) {
+            classesQuery = classesQuery.eq("lecturer_id", userId);
+        }
+
+        const { data: classes } = await classesQuery;
+
         if (!classes || classes.length === 0) {
             return NextResponse.json({ reply: `No active classes found for ${dayQuery}.` });
+        }
+
+        if (isAdmin) {
+            const lines = (classes as unknown as Array<{
+                course_code: string; course_name: string; start_time: string;
+                venue: string | null; lecturer?: { full_name: string } | { full_name: string }[];
+            }>).map(entry => {
+                const lecturer = Array.isArray(entry.lecturer) ? entry.lecturer[0] : entry.lecturer;
+                return `• ${entry.course_code} ${entry.course_name} at ${entry.start_time.slice(0, 5)}${entry.venue ? `, ${entry.venue}` : ""} — ${lecturer?.full_name ?? "Unassigned"}`;
+            });
+            return NextResponse.json({
+                reply: `There are ${classes.length} class${classes.length === 1 ? "" : "es"} scheduled for ${dayQuery}:\n${lines.join("\n")}`
+            });
         }
 
         const lines = (classes as Array<Record<string, string>>).map(entry =>
@@ -107,13 +125,24 @@ export async function POST(req: Request) {
         return NextResponse.json({ reply: `You have ${count ?? 0} pending change requests.` });
     }
 
-    if (match(normalized, /\b(notification(s)?|sms|message(s)?|sent|delivered)\b/)) {
+    if (match(normalized, /\b(notification(s)?|sms|message(s)?|sent|delivered|failed|pending)\b/)) {
+        // FIXED: the question's wording was ignored — every reply hardcoded
+        // status = "delivered" even when the person explicitly asked about
+        // failed or pending messages. Now the requested status is detected
+        // from the message itself.
+        const status = match(normalized, /\bfailed\b/) ? "failed"
+            : match(normalized, /\bpending\b/) ? "pending"
+            : "delivered";
+
         const base = supabase.from("notifications");
         const query = isAdmin
-            ? base.select("id", { count: "exact", head: true }).eq("status", "delivered")
-            : base.select("id", { count: "exact", head: true }).eq("lecturer_id", userId).eq("status", "delivered");
+            ? base.select("id", { count: "exact", head: true }).eq("status", status)
+            : base.select("id", { count: "exact", head: true }).eq("lecturer_id", userId).eq("status", status);
+
         const { count } = await query;
-        return NextResponse.json({ reply: `There are ${count ?? 0} delivered SMS notifications${isAdmin ? " in the system." : " for your account."}` });
+        return NextResponse.json({
+            reply: `There are ${count ?? 0} ${status} SMS notification${count === 1 ? "" : "s"}${isAdmin ? " in the system." : " for your account."}`
+        });
     }
 
     if (match(normalized, /\b(lecturer(s)?|teacher(s)?|staff|users)\b/) && isAdmin) {
@@ -121,7 +150,7 @@ export async function POST(req: Request) {
             .from("profiles")
             .select("id", { count: "exact", head: true })
             .eq("role", "lecturer");
-        return NextResponse.json({ reply: `There are ${count ?? 0} registered lecturers in the system.` });
+        return NextResponse.json({ reply: `There are ${count ?? 0} registered lecturer${count === 1 ? "" : "s"} in the system.` });
     }
 
     return NextResponse.json({
