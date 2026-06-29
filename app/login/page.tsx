@@ -74,7 +74,7 @@ export default function LoginPage() {
             <h1 className="font-serif text-white text-3xl md:text-4xl leading-snug mb-2">
               SMS Timetable<br />Reminder System
             </h1>
-            <p className="text-slate-300 text-sm">Lecturer Portal</p>
+            <p className="text-slate-300 text-sm">Computer Science Dept.</p>
           </div>
 
           <div className="glass rounded-3xl p-6 md:p-8 shadow-2xl border-white/10">
