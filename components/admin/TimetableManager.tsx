@@ -224,7 +224,9 @@ export function TimetableManager({ initialEntries, lecturers }: Props) {
               onChange={e => set("lecturer_id", e.target.value)}>
               <option value="">— Select Lecturer —</option>
               {lecturers.map(l => (
-                <option key={l.id} value={l.id}>{l.full_name}</option>
+                <option key={l.id} value={l.id}>
+                  {l.full_name}{l.role === "admin" ? " (Admin)" : ""}
+                </option>
               ))}
             </select>
           </div>
