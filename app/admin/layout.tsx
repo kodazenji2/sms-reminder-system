@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/admin/Sidebar";
+import { ChatAssistant } from "@/components/ui/ChatAssistant";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -54,6 +55,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         <main className="flex-1 p-8 overflow-auto">{children}</main>
       </div>
+
+      {/* Floating assistant — same component as lecturer view.
+          The /api/chat route already branches on isAdmin to return
+          system-wide counts (all pending requests, all delivered SMS,
+          total lecturer count) instead of per-lecturer figures. */}
+      <ChatAssistant />
     </div>
   );
 }
