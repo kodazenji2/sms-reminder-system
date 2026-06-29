@@ -13,8 +13,8 @@ export default async function TimetablePage() {
       .eq("active", true)
       .order("day_of_week").order("start_time"),
     supabase.from("profiles")
-      .select("id, full_name, phone, network")
-      .eq("role", "lecturer")
+      .select("id, full_name, phone, network, role")
+      .in("role", ["lecturer", "admin"])
       .order("full_name"),
   ]);
 
