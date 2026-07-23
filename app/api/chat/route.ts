@@ -28,12 +28,35 @@ function todayLabel() {
   return DAY_NAMES[nowWAT().getUTCDay()];
 }
 
+function yesterdayLabel() {
+  return DAY_NAMES[(nowWAT().getUTCDay() + 6) % 7];
+}
+
 function tomorrowLabel() {
   return DAY_NAMES[(nowWAT().getUTCDay() + 1) % 7];
 }
 
 function match(text: string, pattern: RegExp) {
   return pattern.test(text);
+}
+
+function resolveRequestedDay(text: string) {
+  if (match(text, /\byesterday\b/)) return yesterdayLabel();
+  if (match(text, /\btoday\b/)) return todayLabel();
+  if (match(text, /\btomorrow\b|\bnext day\b/)) return tomorrowLabel();
+
+  for (const day of DAY_NAMES) {
+    if (match(text, new RegExp(`\\b${day.toLowerCase()}\\b`))) {
+      return day;
+    }
+  }
+
+  return todayLabel();
+}
+
+function scopeLabel(text: string) {
+  if (match(text, /\bweek\b|\bfull week\b|\bentire week\b/)) return "week";
+  return "day";
 }
 
 export async function POST(req: Request) {
@@ -59,10 +82,48 @@ export async function POST(req: Request) {
     .single();
 
   const isAdmin = profile?.role === "admin";
-  const day = match(normalized, /tomorrow|next day/) ? tomorrowLabel() : todayLabel();
+  const requestScope = scopeLabel(normalized);
+  const requestedDay = resolveRequestedDay(normalized);
 
   if (match(normalized, /\b(class(es)?|schedule(s)?|course(s)?|lecture(s)?|lesson(s)?)\b/)) {
-    const dayQuery = match(normalized, /tomorrow|next|upcoming/) ? tomorrowLabel() : day;
+    if (requestScope === "week") {
+      let weekQuery = supabase
+        .from("timetable")
+        .select("course_code, course_name, start_time, end_time, venue, day_of_week")
+        .eq("active", true)
+        .order("day_of_week")
+        .order("start_time");
+
+      if (!isAdmin) {
+        weekQuery = weekQuery.eq("lecturer_id", userId);
+      }
+
+      const { data: classes } = await weekQuery;
+      const weeklyEntries = (classes as Array<Record<string, string>> | null) ?? [];
+
+      if (weeklyEntries.length === 0) {
+        return NextResponse.json({ reply: "No active classes found for the full week." });
+      }
+
+      const grouped = DAY_NAMES.slice(1).map(day => ({
+        day,
+        entries: weeklyEntries.filter(entry => entry.day_of_week === day),
+      }));
+
+      const lines = grouped
+        .filter(group => group.entries.length > 0)
+        .map(group => {
+          const entryLines = group.entries.map(entry =>
+            `• ${entry.course_code} ${entry.course_name} at ${entry.start_time.slice(0, 5)}${entry.venue ? `, ${entry.venue}` : ""}`
+          );
+
+          return `${group.day}\n${entryLines.join("\n")}`;
+        });
+
+      return NextResponse.json({
+        reply: `${isAdmin ? "System" : "Your"} full-week schedule:\n${lines.join("\n\n")}`
+      });
+    }
 
     let classesQuery = supabase
       .from("timetable")
@@ -70,7 +131,7 @@ export async function POST(req: Request) {
         ? "course_code, course_name, start_time, end_time, venue, lecturer:profiles!lecturer_id(full_name)"
         : "course_code, course_name, start_time, end_time, venue")
       .eq("active", true)
-      .eq("day_of_week", dayQuery)
+      .eq("day_of_week", requestedDay)
       .order("start_time");
 
     if (!isAdmin) {
@@ -80,7 +141,7 @@ export async function POST(req: Request) {
     const { data: classes } = await classesQuery;
 
     if (!classes || classes.length === 0) {
-      return NextResponse.json({ reply: `No active classes found for ${dayQuery}.` });
+      return NextResponse.json({ reply: `No active classes found for ${requestedDay}.` });
     }
 
     if (isAdmin) {
@@ -92,16 +153,15 @@ export async function POST(req: Request) {
         return `• ${entry.course_code} ${entry.course_name} at ${entry.start_time.slice(0, 5)}${entry.venue ? `, ${entry.venue}` : ""} — ${lecturer?.full_name ?? "Unassigned"}`;
       });
       return NextResponse.json({
-        reply: `There are ${classes.length} class${classes.length === 1 ? "" : "es"} scheduled for ${dayQuery}:\n${lines.join("\n")}`
+        reply: `There are ${classes.length} class${classes.length === 1 ? "" : "es"} scheduled for ${requestedDay}:\n${lines.join("\n")}`
       });
     }
 
-    // FIX: cast via unknown to avoid TS overlap error with the admin branch union type
     const lines = (classes as unknown as Array<Record<string, string>>).map(entry =>
       `• ${entry.course_code} ${entry.course_name} at ${entry.start_time.slice(0, 5)}${entry.venue ? `, ${entry.venue}` : ""}`
     );
 
-    return NextResponse.json({ reply: `Your ${dayQuery} schedule:\n${lines.join("\n")}` });
+    return NextResponse.json({ reply: `Your ${requestedDay} schedule:\n${lines.join("\n")}` });
   }
 
   if (match(normalized, /\b(change request(s)?|pending request(s)?|request(s)?|request status)\b/)) {
@@ -126,7 +186,7 @@ export async function POST(req: Request) {
   if (match(normalized, /\b(notification(s)?|sms|message(s)?|sent|delivered|failed|pending)\b/)) {
     const status = match(normalized, /\bfailed\b/) ? "failed"
       : match(normalized, /\bpending\b/) ? "pending"
-      : "delivered";
+        : "delivered";
 
     const base = supabase.from("notifications");
     const query = isAdmin
