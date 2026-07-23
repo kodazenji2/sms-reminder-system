@@ -94,9 +94,7 @@ export default function LoginPage() {
                 placeholder="08012345678 or your@nict.edu.ng"
                 autoComplete="username"
               />
-              <p className="text-xs text-slate-300 mt-2">
-                Phone numbers are automatically converted to the Supabase login format, e.g. <span className="font-semibold">08012345678@nict.edu.ng</span>.
-              </p>
+            
             </div>
 
             <div className="mb-5">
