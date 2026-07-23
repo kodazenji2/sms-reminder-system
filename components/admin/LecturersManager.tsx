@@ -173,6 +173,9 @@ export function LecturersManager({ initialLecturers, classCounts }: Props) {
                 onChange={e => set("email", e.target.value)}
                 placeholder="john.doe@nict.edu.ng or leave blank"
                 disabled={mode === "edit"} />
+              <p className="text-[11px] text-nictm-600 mt-1">
+                Tip: If this lecturer may become an admin later, please enter both the phone number and email address.
+              </p>
             </div>
             {mode === "edit" ? (
               <div>
