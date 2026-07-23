@@ -112,6 +112,22 @@ alter table public.timetable       enable row level security;
 alter table public.change_requests enable row level security;
 alter table public.notifications   enable row level security;
 
+create unique index if not exists profiles_phone_unique
+  on public.profiles (phone)
+  where phone is not null;
+
+create or replace function public.resolve_login_email(phone_input text)
+returns text
+language sql
+security definer
+set search_path = ''
+as $$
+  select email
+  from public.profiles
+  where phone = phone_input
+  limit 1;
+$$;
+
 create or replace function public.is_admin()
 returns boolean language sql security definer as $$
   select exists (

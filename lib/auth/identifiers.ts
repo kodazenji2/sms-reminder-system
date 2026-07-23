@@ -7,9 +7,13 @@ export function isPhoneLikeIdentifier(value: string) {
     return /^\+?\d+$/.test(trimmed) && onlyDigits.length >= 8;
 }
 
+export function normalizePhoneIdentifier(value: string) {
+    return value.trim().replace(/\D/g, "");
+}
+
 export function phoneToPseudoEmail(phone: string) {
     const trimmed = phone.trim();
-    const onlyDigits = trimmed.replace(/\D/g, "");
+    const onlyDigits = normalizePhoneIdentifier(trimmed);
 
     if (!onlyDigits) return "";
 

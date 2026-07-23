@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { NICTMBrand } from "@/components/ui/NICTMBrand";
-import { resolveLoginIdentifier } from "@/lib/auth/identifiers";
+import { isPhoneLikeIdentifier, normalizePhoneIdentifier, resolveLoginIdentifier } from "@/lib/auth/identifiers";
 
 /**
  * Lecturer / Staff Login.
@@ -29,7 +29,19 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const normalizedEmail = resolveLoginIdentifier(email);
+    const rawLoginInput = email.trim();
+    let normalizedEmail = resolveLoginIdentifier(rawLoginInput);
+
+    if (isPhoneLikeIdentifier(rawLoginInput)) {
+      const phoneLookup = normalizePhoneIdentifier(rawLoginInput);
+      const { data: resolvedEmail } = await supabase.rpc("resolve_login_email", {
+        phone_input: phoneLookup,
+      });
+
+      if (resolvedEmail) {
+        normalizedEmail = resolvedEmail;
+      }
+    }
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: normalizedEmail, password,
@@ -94,7 +106,7 @@ export default function LoginPage() {
                 placeholder="08012345678 or your@nict.edu.ng"
                 autoComplete="username"
               />
-            
+
             </div>
 
             <div className="mb-5">
