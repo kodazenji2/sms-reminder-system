@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { NICTMBrand } from "@/components/ui/NICTMBrand";
+import { resolveLoginIdentifier } from "@/lib/auth/identifiers";
 
 /**
  * Lecturer / Staff Login.
@@ -28,8 +29,10 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    const normalizedEmail = resolveLoginIdentifier(email);
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email, password,
+      email: normalizedEmail, password,
     });
 
     if (authError || !data.user) {
@@ -81,16 +84,19 @@ export default function LoginPage() {
             <h2 className="font-serif text-nictm-950 text-xl mb-6">Lecturer Sign In</h2>
 
             <div className="mb-4">
-              <label className="label">Email Address</label>
+              <label className="label">Email Address or Phone Number</label>
               <input
-                type="email"
+                type="text"
                 className="input"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleLogin()}
-                placeholder="your@nictm.edu.ng"
-                autoComplete="email"
+                placeholder="08012345678 or your@nict.edu.ng"
+                autoComplete="username"
               />
+              <p className="text-xs text-slate-300 mt-2">
+                Phone numbers are automatically converted to the Supabase login format, e.g. <span className="font-semibold">08012345678@nict.edu.ng</span>.
+              </p>
             </div>
 
             <div className="mb-5">
@@ -128,7 +134,7 @@ export default function LoginPage() {
               {loading ? "Signing in…" : "Sign In →"}
             </button>
 
-            
+
           </div>
         </div>
       </div>

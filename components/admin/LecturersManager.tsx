@@ -52,8 +52,8 @@ export function LecturersManager({ initialLecturers, classCounts }: Props) {
   async function handleSave() {
     setError(null);
     if (mode === "add") {
-      if (!form.full_name || !form.email || !form.password) {
-        setError("Name, email, and a temporary password are required."); return;
+      if (!form.full_name || !form.phone || !form.password) {
+        setError("Name, phone, and a temporary password are required. Email is optional for phone-based login."); return;
       }
       const res = await fetch("/api/admin/lecturers", {
         method: "POST",
@@ -168,10 +168,10 @@ export function LecturersManager({ initialLecturers, classCounts }: Props) {
               </div>
             </div>
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">Email Address (optional for phone login)</label>
               <input type="email" className="input" value={form.email}
                 onChange={e => set("email", e.target.value)}
-                placeholder="john.doe@nictm.edu.ng"
+                placeholder="john.doe@nict.edu.ng or leave blank"
                 disabled={mode === "edit"} />
             </div>
             {mode === "edit" ? (

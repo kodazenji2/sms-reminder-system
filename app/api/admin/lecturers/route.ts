@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { phoneToPseudoEmail } from "@/lib/auth/identifiers";
 
 async function guardAdmin() {
   const supabase = await createClient();
@@ -29,14 +30,20 @@ export async function POST(req: Request) {
 
   const { full_name, email, password, phone, network } = await req.json();
 
-  if (!full_name || !email || !password)
-    return NextResponse.json({ error: "full_name, email and password are required." }, { status: 400 });
+  if (!full_name || !password || (!email && !phone))
+    return NextResponse.json({ error: "full_name, password, and either an email or phone number are required." }, { status: 400 });
+
+  const normalizedEmail = (email || phoneToPseudoEmail(phone)).trim();
+
+  if (!normalizedEmail || !normalizedEmail.includes("@")) {
+    return NextResponse.json({ error: "A valid email address or phone number is required." }, { status: 400 });
+  }
 
   const admin = createAdminClient();
 
   // Create auth user with the service role — this also fires the handle_new_user trigger
   const { data: created, error: authError } = await admin.auth.admin.createUser({
-    email,
+    email: normalizedEmail,
     password,
     email_confirm: true,         // Skip email verification for staff accounts
     user_metadata: { full_name },
