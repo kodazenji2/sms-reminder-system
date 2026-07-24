@@ -187,7 +187,7 @@ export function TimetableManager({ initialEntries, lecturers }: Props) {
         </table>
       </div>
       <p className="text-xs text-nictm-600 mt-3">
-        Reminders are sent automatically 30 minutes before each class.
+        Reminders are sent automatically at Lecturers' preference before each class.
         Click <strong>SMS</strong> to send a manual reminder immediately.
       </p>
 
