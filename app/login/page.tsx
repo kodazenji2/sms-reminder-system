@@ -96,14 +96,14 @@ export default function LoginPage() {
             <h2 className="font-serif text-nictm-950 text-xl mb-6">Lecturer Sign In</h2>
 
             <div className="mb-4">
-              <label className="label">Email Address or Phone Number</label>
+              <label className="label">Phone Number or Email Address</label>
               <input
                 type="text"
                 className="input"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleLogin()}
-                placeholder="08012345678 or your@nict.edu.ng"
+                placeholder="08012... or your@nict.edu.ng"
                 autoComplete="username"
               />
 
