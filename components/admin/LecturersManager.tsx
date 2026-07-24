@@ -73,6 +73,7 @@ export function LecturersManager({ initialLecturers, classCounts }: Props) {
         body: JSON.stringify({
           full_name: form.full_name,
           phone: form.phone,
+          email: form.email.trim(),
           network: form.network,
           active,
         }),
@@ -171,8 +172,7 @@ export function LecturersManager({ initialLecturers, classCounts }: Props) {
               <label className="label">Email Address (optional for phone login)</label>
               <input type="email" className="input" value={form.email}
                 onChange={e => set("email", e.target.value)}
-                placeholder="john.doe@nict.edu.ng or leave blank"
-                disabled={mode === "edit"} />
+                placeholder="john.doe@nict.edu.ng or leave blank" />
               <p className="text-[11px] text-nictm-600 mt-1">
                 Tip: If this lecturer may become an admin later, please enter both the phone number and email address.
               </p>
