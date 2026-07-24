@@ -103,7 +103,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleLogin()}
-                placeholder="08012... or your@nict.edu.ng"
+                placeholder="080xxxxxxxx or your@nict.edu.ng"
                 autoComplete="username"
               />
 
