@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendSMS, buildReminderMessage } from "@/lib/termii";
+import { sendSMS, buildReminderMessage, formatTime12h } from "@/lib/termii";
 
 export async function GET(request: Request) {
 
@@ -148,8 +148,9 @@ export async function GET(request: Request) {
     const message = buildReminderMessage({
       courseCode: entry.course_code,
       courseName: entry.course_name,
-      startTime: entry.start_time.slice(0, 5),
+      startTime: formatTime12h(entry.start_time),
       venue: entry.venue ?? "TBD",
+      lecturerName: lecturer.full_name,
     });
 
     const result = await sendSMS(lecturer.phone, message);
