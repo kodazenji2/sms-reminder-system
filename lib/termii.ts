@@ -1,4 +1,3 @@
-
 /**
  * Termii SMS Gateway Integration
  * Docs: https://developers.termii.com/messaging
@@ -34,6 +33,31 @@ function toInternationalFormat(phone: string): string {
   if (digits.startsWith("234")) return digits;
   if (digits.startsWith("0")) return "234" + digits.slice(1);
   return digits;
+}
+
+/**
+ * Strips a trailing single-letter middle initial, keeping title + name.
+ * "Mr. Nanle D"           -> "Mr. Nanle"
+ * "Surv. Henry Oriakhi E" -> "Surv. Henry Oriakhi"
+ * "Dr. Adeyemi O."        -> "Dr. Adeyemi"
+ * "Mrs. Blessing"         -> "Mrs. Blessing" (unchanged, no trailing initial)
+ */
+function formatLecturerName(fullName: string): string {
+  return fullName.trim().replace(/\s+[A-Za-z]\.?$/, "").trim();
+}
+
+/**
+ * Converts "HH:MM" or "HH:MM:SS" (24h) to a 12h "H:MM AM/PM" string.
+ * "13:00"    -> "1:00 PM"
+ * "08:00:00" -> "8:00 AM"
+ */
+export function formatTime12h(time: string): string {
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr ?? "0", 10);
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
 /**
@@ -95,7 +119,9 @@ export function buildReminderMessage(opts: {
   venue: string;
   lecturerName?: string; // optional, e.g. "Dr. Adeyemi" — use surname/title only, not full bio
 }): string {
-  const greeting = opts.lecturerName ? `Good day ${opts.lecturerName},` : `Good day,`;
+  const greeting = opts.lecturerName
+    ? `Good day ${formatLecturerName(opts.lecturerName)},`
+    : `Good day,`;
 
   const msg =
     `${greeting} this is a kind reminder that your class ${opts.courseCode} (${opts.courseName}) ` +
