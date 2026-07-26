@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendSMS, buildReminderMessage, formatTime12h } from "@/lib/termii";
+import { sendSMS, buildReminderMessage, buildDigestMessage, formatTime12h } from "@/lib/termii";
 
 export async function GET(request: Request) {
 
@@ -54,18 +54,22 @@ export async function GET(request: Request) {
     });
   }
 
-  // ── Send reminders ────────────────────────────────────────────────────────
-  const results: { course: string; lecturer: string; phone: string; status: string }[] = [];
-
   // Helper: parse HH:MM:SS -> { h, m }
   const parseTime = (t: string) => {
     const parts = (t || "00:00:00").split(":");
     return { h: parseInt(parts[0] || "0", 10), m: parseInt(parts[1] || "0", 10) };
   };
 
-  // For each timetable entry decide the class date (today or tomorrow), compute
-  // scheduled send times for the lecturer's preferences and send when one falls
-  // inside the current window.
+  type Eligible = {
+    entry: (typeof entries)[number];
+    lecturer: { id: string; full_name: string; phone: string };
+    toSendType: string;
+    classDate: string;
+  };
+
+  // ── Phase 1: figure out which entries are due, skipping already-delivered ones ──
+  const eligible: Eligible[] = [];
+
   for (const entry of entries) {
     const lecturer = Array.isArray(entry.lecturer) ? entry.lecturer[0] : entry.lecturer;
 
@@ -98,12 +102,13 @@ export async function GET(request: Request) {
     const scheduled: { type: string; ms: number }[] = [];
     for (const p of prefs) {
       if (p === 'night_before') {
-        // 21:00 the day before
+        // 19:00 (7 PM) the day before — kept safely ahead of the NCC's
+        // 8:00 PM WAT cutoff for SMS delivery.
         const prev = new Date(classWatMs - 24 * 60 * 60 * 1000);
         const prevYear = prev.getUTCFullYear();
         const prevMonth = prev.getUTCMonth();
         const prevDate = prev.getUTCDate();
-        const ms = Date.UTC(prevYear, prevMonth, prevDate, 21, 0, 0) + watOffset;
+        const ms = Date.UTC(prevYear, prevMonth, prevDate, 19, 0, 0) + watOffset;
         scheduled.push({ type: p, ms });
       } else if (p === 'morning_of') {
         // 07:00 on the day of class
@@ -111,7 +116,7 @@ export async function GET(request: Request) {
         const y = d.getUTCFullYear();
         const mo = d.getUTCMonth();
         const da = d.getUTCDate();
-        const ms = Date.UTC(y, mo, da, 7, 0, 0) + watOffset;
+        const ms = Date.UTC(y, mo, da, 8, 0, 0) + watOffset;
         scheduled.push({ type: p, ms });
       } else if (p === 'one_hour_before') {
         scheduled.push({ type: p, ms: classWatMs - 60 * 60 * 1000 });
@@ -145,6 +150,108 @@ export async function GET(request: Request) {
       continue;
     }
 
+    eligible.push({ entry, lecturer, toSendType, classDate });
+  }
+
+  // ── Phase 2: send. Digest types (night_before/morning_of) get grouped per
+  // lecturer into ONE message; immediate types (one_hour_before/
+  // thirty_minutes_before) stay as individual per-class messages. ──
+  const DIGEST_TYPES = new Set(["night_before", "morning_of"]);
+
+  const digestGroups = new Map<string, Eligible[]>(); // key: lecturerId::toSendType
+  const individual: Eligible[] = [];
+
+  for (const item of eligible) {
+    if (DIGEST_TYPES.has(item.toSendType)) {
+      const key = `${item.lecturer.id}::${item.toSendType}`;
+      const group = digestGroups.get(key) ?? [];
+      group.push(item);
+      digestGroups.set(key, group);
+    } else {
+      individual.push(item);
+    }
+  }
+
+  const results: { course: string; lecturer: string; phone: string; status: string }[] = [];
+
+  // Tracks phone numbers already sent to in this run, so we can stagger
+  // repeat sends to the same number (avoids carrier flood/anti-spam rejects).
+  const sentToPhone = new Set<string>();
+  const STAGGER_MS = 4000; // 4s gap between sends to the same number
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const sendAndLog = async (
+    phone: string,
+    message: string,
+    logRows: { lecturer_id: string; timetable_id: string; class_date: string; reminder_type: string }[],
+    lecturerName: string,
+    courseLabel: string
+  ) => {
+    if (sentToPhone.has(phone)) {
+      console.log(`[Cron] Staggering repeat send to ${phone} by ${STAGGER_MS}ms.`);
+      await sleep(STAGGER_MS);
+    }
+    sentToPhone.add(phone);
+
+    const result = await sendSMS(phone, message);
+
+    // One notification row per timetable entry covered by this message, so
+    // per-class dedup still works correctly on future runs — even though
+    // only one SMS was actually sent.
+    for (const row of logRows) {
+      await supabase.from("notifications").insert({
+        lecturer_id: row.lecturer_id,
+        timetable_id: row.timetable_id,
+        phone,
+        message,
+        status: result.success ? "delivered" : "failed",
+        termii_message_id: result.messageId ?? null,
+        class_date: row.class_date,
+        reminder_type: row.reminder_type,
+      });
+    }
+
+    results.push({
+      course: courseLabel,
+      lecturer: lecturerName,
+      phone,
+      status: result.success ? "delivered" : "failed",
+    });
+
+    if (!result.success) {
+      console.error(`[Cron] SMS failed for ${lecturerName}: ${result.error}`);
+    }
+  };
+
+  // Send digests (one message per lecturer per reminder type)
+  for (const group of digestGroups.values()) {
+    const { lecturer, toSendType } = group[0];
+    const message = buildDigestMessage({
+      lecturerName: lecturer.full_name,
+      reminderType: toSendType as "night_before" | "morning_of",
+      classes: group.map((g) => ({
+        courseCode: g.entry.course_code,
+        startTime: formatTime12h(g.entry.start_time),
+        venue: g.entry.venue ?? "TBD",
+      })),
+    });
+
+    const logRows = group.map((g) => ({
+      lecturer_id: lecturer.id,
+      timetable_id: g.entry.id,
+      class_date: g.classDate,
+      reminder_type: g.toSendType,
+    }));
+
+    const courseLabel = group.map((g) => g.entry.course_code).join(", ");
+
+    await sendAndLog(lecturer.phone, message, logRows, lecturer.full_name, courseLabel);
+  }
+
+  // Send individual reminders (one_hour_before / thirty_minutes_before)
+  for (const item of individual) {
+    const { entry, lecturer, toSendType, classDate } = item;
+
     const message = buildReminderMessage({
       courseCode: entry.course_code,
       courseName: entry.course_name,
@@ -153,29 +260,20 @@ export async function GET(request: Request) {
       lecturerName: lecturer.full_name,
     });
 
-    const result = await sendSMS(lecturer.phone, message);
-
-    await supabase.from("notifications").insert({
+    const logRows = [{
       lecturer_id: lecturer.id,
       timetable_id: entry.id,
-      phone: lecturer.phone,
-      message,
-      status: result.success ? "delivered" : "failed",
-      termii_message_id: result.messageId ?? null,
       class_date: classDate,
       reminder_type: toSendType,
-    });
+    }];
 
-    results.push({
-      course: `${entry.course_code} – ${entry.course_name}`,
-      lecturer: lecturer.full_name,
-      phone: lecturer.phone,
-      status: result.success ? "delivered" : "failed",
-    });
-
-    if (!result.success) {
-      console.error(`[Cron] SMS failed for ${lecturer.full_name}: ${result.error}`);
-    }
+    await sendAndLog(
+      lecturer.phone,
+      message,
+      logRows,
+      lecturer.full_name,
+      `${entry.course_code} – ${entry.course_name}`
+    );
   }
 
   return NextResponse.json({
