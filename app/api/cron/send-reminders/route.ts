@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     .from("timetable")
     .select(`
       id, course_code, course_name, start_time, venue, day_of_week, active,
-      lecturer:profiles!lecturer_id (id, full_name, phone, reminder_preferences)
+      lecturer:profiles!lecturer_id (id, full_name, phone, active, reminder_preferences)
     `)
     .in("day_of_week", [todayDay, tomorrowDay])
     .eq("active", true);
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 
   type Eligible = {
     entry: (typeof entries)[number];
-    lecturer: { id: string; full_name: string; phone: string };
+    lecturer: { id: string; full_name: string; phone: string; active: boolean };
     toSendType: string;
     classDate: string;
   };
@@ -75,6 +75,11 @@ export async function GET(request: Request) {
 
     if (!lecturer?.phone) {
       console.warn(`[Cron] Skipping ${entry.course_code}: no phone for lecturer ${lecturer?.full_name}`);
+      continue;
+    }
+
+    if (!lecturer.active) {
+      console.log(`[Cron] Skipping ${entry.course_code}: lecturer ${lecturer.full_name} is inactive.`);
       continue;
     }
 
@@ -116,7 +121,7 @@ export async function GET(request: Request) {
         const y = d.getUTCFullYear();
         const mo = d.getUTCMonth();
         const da = d.getUTCDate();
-        const ms = Date.UTC(y, mo, da, 8, 0, 0) + watOffset;
+        const ms = Date.UTC(y, mo, da, 7, 0, 0) + watOffset;
         scheduled.push({ type: p, ms });
       } else if (p === 'one_hour_before') {
         scheduled.push({ type: p, ms: classWatMs - 60 * 60 * 1000 });
