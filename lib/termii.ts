@@ -133,3 +133,40 @@ export function buildReminderMessage(opts: {
   }
   return msg;
 }
+
+/**
+ * Builds a single batched SMS listing multiple classes for one lecturer.
+ * Used for "night_before" and "morning_of" reminders, where a lecturer with
+ * several classes the next day (or same day) would otherwise receive
+ * multiple back-to-back texts at the same trigger time — which is both a
+ * poor experience and a real risk of carrier flood/anti-spam rejection.
+ *
+ * "one_hour_before" and "thirty_minutes_before" reminders stay on
+ * buildReminderMessage — those rarely collide since classes at different
+ * times trigger at different moments.
+ */
+export function buildDigestMessage(opts: {
+  lecturerName?: string;
+  reminderType: "night_before" | "morning_of";
+  classes: { courseCode: string; startTime: string; venue: string }[];
+}): string {
+  const greeting = opts.lecturerName
+    ? `Good day ${formatLecturerName(opts.lecturerName)},`
+    : `Good day,`;
+
+  const intro =
+    opts.reminderType === "night_before"
+      ? "you have the following classes coming up tomorrow:"
+      : "you have the following classes coming up today:";
+
+  const lines = opts.classes
+    .map((c, i) => `${i + 1}) ${c.courseCode} ${c.startTime} at ${c.venue}.`)
+    .join(" ");
+
+  const msg = `${greeting} ${intro} ${lines} Kindly note the time. Thank you. NICTM CS Dept.`;
+
+  if (process.env.NODE_ENV === "development" && msg.length > 160) {
+    console.warn(`[Termii] Digest message is ${msg.length} chars — will use multiple SMS segments.`);
+  }
+  return msg;
+}
