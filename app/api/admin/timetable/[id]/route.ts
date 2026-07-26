@@ -56,7 +56,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   return NextResponse.json(data);
 }
 
-/** DELETE /api/admin/timetable/[id] — soft-delete by setting active=false */
+/** DELETE /api/admin/timetable/[id] — permanently remove entry (hard delete) */
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!await guardAdmin())
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -66,7 +66,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
   const admin = createAdminClient();
   const { error } = await admin
     .from("timetable")
-    .update({ active: false })
+    .delete()
     .eq("id", params.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
