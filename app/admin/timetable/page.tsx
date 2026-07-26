@@ -10,7 +10,6 @@ export default async function TimetablePage() {
   const [{ data: entries }, { data: lecturers }] = await Promise.all([
     supabase.from("timetable")
       .select("*, lecturer:profiles!lecturer_id(id, full_name, phone, network)")
-      .eq("active", true)
       .order("day_of_week").order("start_time"),
     supabase.from("profiles")
       .select("id, full_name, phone, network, role")
