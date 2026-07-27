@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { sendSMS, buildReminderMessage } from "@/lib/termii";
+import { sendSMS, buildReminderMessage, formatTime12h } from "@/lib/termii";
 
 /** POST /api/admin/timetable/[id]/sms — send a manual/test SMS reminder */
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -33,8 +33,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const message = buildReminderMessage({
     courseCode: entry.course_code,
     courseName: entry.course_name,
-    startTime: entry.start_time.slice(0, 5),
+    startTime: formatTime12h(entry.start_time),
     venue: entry.venue ?? "TBD",
+    lecturerName: lecturer.full_name,
   });
 
   const result = await sendSMS(lecturer.phone, message);
