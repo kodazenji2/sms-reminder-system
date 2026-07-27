@@ -1,6 +1,6 @@
--- ==========================================================
--- NICTM SMS Timetable Reminder System — Database Schema
--- ==========================================================
+-- ============================================================================
+-- NICTM COMPUTER Science Dept. SMS Timetable Reminder System — Database Schema
+-- ============================================================================
 
 create extension if not exists "pgcrypto";
 
@@ -155,9 +155,9 @@ create policy "Admins read notifications"     on public.notifications for select
 
 -- ----------------------------------------------------------
 -- 6. AFTER RUNNING THIS SCHEMA:
--- 1. We create admin user in Supabase Auth (Dashboard > Authentication > Users > Add User)
--- 2. Run the UPDATE below with that user's email to grant admin role:
+-- 1. We created admin user in Supabase Auth (Dashboard > Authentication > Users > Add User)
+-- 2. We ra the UPDATE below with that user's email to grant admin role:
 --
--- THen we update public.profiles set role = 'admin', full_name = 'Administrator'
+-- set role = 'admin', full_name = 'Administrator'
 -- where email = 'your-admin@nictm.edu.ng';
 -- ----------------------------------------------------------
