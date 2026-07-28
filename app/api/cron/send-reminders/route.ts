@@ -11,10 +11,12 @@ export async function GET(request: Request) {
   }
 
   // ── Time calculation (WAT = UTC+1) ────────────────────────────────────────
-  // This endpoint is intended to be called hourly by an external scheduler
-  // (e.g. cron-job.org). We compute a ±window around now in WAT and send any
-  // reminder whose scheduled send time falls inside that window.
-  const WINDOW_MINUTES = 30; // ±30 minutes to allow hourly triggers
+  // This endpoint should be called every 15 minutes by an external scheduler
+  // (e.g. cron-job.org). Digest-style reminders (night_before/morning_of)
+
+  const WIDE_WINDOW_MINUTES = 30;
+  const TIGHT_WINDOW_MINUTES = 10;
+  const TIGHT_TYPES = new Set(["one_hour_before", "thirty_minutes_before"]);
 
   const nowUTC = new Date();
   const watOffset = 60 * 60 * 1000; // UTC+1
@@ -25,8 +27,9 @@ export async function GET(request: Request) {
   const tomorrow = new Date(watNow.getTime() + 24 * 60 * 60 * 1000);
   const tomorrowDay = DAYS[tomorrow.getUTCDay()];
 
-  const windowStart = new Date(watNow.getTime() - WINDOW_MINUTES * 60 * 1000);
-  const windowEnd = new Date(watNow.getTime() + WINDOW_MINUTES * 60 * 1000);
+  // Widest possible window, just for the summary response text below.
+  const windowStart = new Date(watNow.getTime() - WIDE_WINDOW_MINUTES * 60 * 1000);
+  const windowEnd = new Date(watNow.getTime() + WIDE_WINDOW_MINUTES * 60 * 1000);
 
   // ── Query classes due for a reminder ─────────────────────────────────────
   const supabase = createAdminClient();
@@ -130,10 +133,12 @@ export async function GET(request: Request) {
       }
     }
 
-    // See if any scheduled time falls inside window
+    // See if any scheduled time falls inside its type's tolerance window
     let toSendType: string | null = null;
     for (const s of scheduled) {
-      if (s.ms >= windowStart.getTime() && s.ms <= windowEnd.getTime()) {
+      const tolerance = TIGHT_TYPES.has(s.type) ? TIGHT_WINDOW_MINUTES : WIDE_WINDOW_MINUTES;
+      const diffMs = Math.abs(watNow.getTime() - s.ms);
+      if (diffMs <= tolerance * 60 * 1000) {
         toSendType = s.type; break;
       }
     }
