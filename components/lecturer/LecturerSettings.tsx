@@ -148,11 +148,11 @@ export function LecturerSettings() {
                                 <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('night_before')} onChange={e => {
                                     const next = reminderPreferences.includes('night_before') ? reminderPreferences.filter(x => x !== 'night_before') : [...reminderPreferences, 'night_before'];
                                     setReminderPreferences(next);
-                                }} /> Night before (21:00)</label>
+                                }} /> Night before </label>
                                 <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('morning_of')} onChange={e => {
                                     const next = reminderPreferences.includes('morning_of') ? reminderPreferences.filter(x => x !== 'morning_of') : [...reminderPreferences, 'morning_of'];
                                     setReminderPreferences(next);
-                                }} /> Morning of class (07:00)</label>
+                                }} /> Morning of class </label>
                                 <label className="flex items-center gap-2"><input type="checkbox" checked={reminderPreferences.includes('one_hour_before')} onChange={e => {
                                     const next = reminderPreferences.includes('one_hour_before') ? reminderPreferences.filter(x => x !== 'one_hour_before') : [...reminderPreferences, 'one_hour_before'];
                                     setReminderPreferences(next);
