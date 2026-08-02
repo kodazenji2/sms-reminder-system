@@ -190,6 +190,9 @@ export async function GET(request: Request) {
   const STAGGER_MS = 4000; // 4s gap between sends to the same number
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  const MAX_RETRIES = 3;
+  const RETRY_BASE_MS = 2000; // 2s base, doubles each attempt
+
   const sendAndLog = async (
     phone: string,
     message: string,
@@ -203,10 +206,49 @@ export async function GET(request: Request) {
     }
     sentToPhone.add(phone);
 
-    const result = await sendSMS(phone, message);
+    // ── Race-condition guard: re-check dedup right before sending ─────────────
+    // A parallel cron invocation could have already delivered this between
+    // Phase 1 (eligibility check) and Phase 2 (send). We do a final check
+    // per logRow; if any are already delivered we skip the whole batch.
+    for (const row of logRows) {
+      const { data: raceCheck } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("timetable_id", row.timetable_id)
+        .eq("class_date", row.class_date)
+        .eq("reminder_type", row.reminder_type)
+        .eq("status", "delivered")
+        .limit(1);
 
-    // One notification row per timetable entry covered by this message, so
-    // per-class dedup still works correctly on future runs — even though
+      if (raceCheck && raceCheck.length > 0) {
+        console.log(`[Cron] Race guard: ${courseLabel} — ${row.reminder_type} already delivered by another run. Skipping.`);
+        return;
+      }
+    }
+
+    // ── Retry loop with exponential backoff ───────────────────────────────────
+    let result = { success: false, messageId: undefined as string | undefined, error: "Not attempted" };
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        result = await sendSMS(phone, message);
+        if (result.success) break;
+
+        console.warn(`[Cron] Attempt ${attempt}/${MAX_RETRIES} failed for ${lecturerName}: ${result.error}`);
+      } catch (err) {
+        result.error = err instanceof Error ? err.message : String(err);
+        console.warn(`[Cron] Attempt ${attempt}/${MAX_RETRIES} threw for ${lecturerName}: ${result.error}`);
+      }
+
+      if (attempt < MAX_RETRIES) {
+        const backoff = RETRY_BASE_MS * Math.pow(2, attempt - 1); // 2s, 4s, 8s
+        console.log(`[Cron] Retrying in ${backoff}ms…`);
+        await sleep(backoff);
+      }
+    }
+
+    // ── Log one notification row per timetable entry covered ─────────────────
+    // Per-class dedup still works correctly on future runs even though
     // only one SMS was actually sent.
     for (const row of logRows) {
       await supabase.from("notifications").insert({
@@ -229,7 +271,7 @@ export async function GET(request: Request) {
     });
 
     if (!result.success) {
-      console.error(`[Cron] SMS failed for ${lecturerName}: ${result.error}`);
+      console.error(`[Cron] All ${MAX_RETRIES} attempts failed for ${lecturerName}: ${result.error}`);
     }
   };
 
