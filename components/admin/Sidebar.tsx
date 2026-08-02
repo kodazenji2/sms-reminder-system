@@ -1,4 +1,4 @@
-"use client";
+use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -56,8 +56,11 @@ export function Sidebar({ pendingCount, teachesClasses = false }: SidebarProps) 
                     <span className="text-base opacity-80">{item.icon}</span>
                     <span className="flex-1">{item.label}</span>
                     {item.label === "Notifications" && pendingCount > 0 && (
-                      <span className="bg-nictm-gold text-nictm-950 text-[10px] font-extrabold rounded-full px-1.5 py-0.5 leading-none">
-                        {pendingCount}
+                      <span className="relative inline-flex items-center justify-center w-5 h-5">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400/30 animate-ping" />
+                        <span className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-extrabold leading-none">
+                          {pendingCount}
+                        </span>
                       </span>
                     )}
                   </div>
@@ -107,8 +110,11 @@ export function Sidebar({ pendingCount, teachesClasses = false }: SidebarProps) 
                 <span className="text-base opacity-80">{item.icon}</span>
                 <span className="flex-1">{item.label}</span>
                 {item.label === "Notifications" && pendingCount > 0 && (
-                  <span className="bg-nictm-gold text-nictm-950 text-[10px] font-extrabold rounded-full px-1.5 py-0.5 leading-none">
-                    {pendingCount}
+                  <span className="relative inline-flex items-center justify-center w-5 h-5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400/30 animate-ping" />
+                    <span className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-extrabold leading-none">
+                      {pendingCount}
+                    </span>
                   </span>
                 )}
               </Link>
