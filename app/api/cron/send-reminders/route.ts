@@ -227,7 +227,7 @@ export async function GET(request: Request) {
     }
 
     // ── Retry loop with exponential backoff ───────────────────────────────────
-    let result = { success: false, messageId: undefined as string | undefined, error: "Not attempted" };
+    let result: Awaited<ReturnType<typeof sendSMS>> = { success: false, error: "Not attempted" };
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
